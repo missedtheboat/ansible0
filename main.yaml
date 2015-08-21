@@ -1,0 +1,25 @@
+---
+
+- hosts: workers
+  tasks:
+  - name: forward rsyslog to logs
+    lineinfile: dest=/etc/rsyslog.conf line="*.* @@192.168.33.12:10514"
+    notify:
+        - restart rsyslog
+
+  handlers:
+  - name: restart rsyslog
+    command: sudo service rsyslog restart
+
+- hosts: logs
+  tasks:
+  - name: receive rsyslog from workers (0/1)
+    lineinfile: dest=/etc/rsyslog.conf line="$InputTCPServerRun 10514"
+  - name: receive rsyslog from workers (1/1)
+    lineinfile: dest=/etc/rsyslog.conf line="$ModLoad imtcp"
+    notify:
+        - restart rsyslog
+
+  handlers:
+  - name: restart rsyslog
+    command: sudo service rsyslog restart
